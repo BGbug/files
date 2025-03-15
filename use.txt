@@ -163,3 +163,18 @@ Creating a VS Code extension to analyze Python scripts for vulnerabilities invol
    Follow the instructions on the [Visual Studio Code Marketplace](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) to publish your extension.
 
 By following these steps, you will have created a VS Code extension that allows users to scan Python files for vulnerabilities using your provided script.
+
+
+
+
+
+"scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
