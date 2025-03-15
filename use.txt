@@ -166,15 +166,35 @@ By following these steps, you will have created a VS Code extension that allows 
 
 
 
-
-
-"scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test"
+module.exports = {
+       target: 'node',
+       entry: './src/extension.ts',
+       output: {
+           path: path.resolve(__dirname, 'dist'),
+           filename: 'extension.js',
+           libraryTarget: 'commonjs2'
+       },
+       devtool: 'source-map',
+       externals: {
+           vscode: 'commonjs vscode'
+       },
+       resolve: {
+           extensions: ['.ts', '.js']
+       },
+       module: {
+           rules: [
+               {
+                   test: /\.ts$/,
+                   exclude: /node_modules/,
+                   use: 'ts-loader'
+               }
+           ]
+       },
+       plugins: [
+           new CopyWebpackPlugin({
+               patterns: [
+                   { from: 'src/**/*.py', to: '[name][ext]' }
+               ]
+           })
+       ]
+   };
