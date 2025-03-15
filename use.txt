@@ -1,0 +1,165 @@
+Creating a VS Code extension to analyze Python scripts for vulnerabilities involves several steps. Below is a step-by-step guide to help you create this extension:
+
+### Step 1: Set Up Your Development Environment
+
+1. **Install Node.js**: Ensure you have Node.js installed. You can download it from [nodejs.org](https://nodejs.org/).
+
+2. **Install VS Code**: Make sure you have Visual Studio Code installed. You can download it from [code.visualstudio.com](https://code.visualstudio.com/).
+
+3. **Install Yeoman and VS Code Extension Generator**:
+   ```bash
+   npm install -g yo generator-code
+   ```
+
+### Step 2: Generate the Extension
+
+1. **Generate the Extension**:
+   ```bash
+   yo code
+   ```
+   Follow the prompts to set up your extension. Choose "New Extension (TypeScript)" for better type safety and maintainability.
+
+### Step 3: Implement the Extension
+
+1. **Open the Generated Project**:
+   Open the generated project in VS Code.
+
+2. **Modify `src/extension.ts`**:
+   Replace the content of `src/extension.ts` with the following code:
+
+   ```typescript
+   import * as vscode from 'vscode';
+   import * as cp from 'child_process';
+   import * as path from 'path';
+
+   export function activate(context: vscode.ExtensionContext) {
+       let disposable = vscode.commands.registerCommand('extension.scanPythonFile', async () => {
+           const options: vscode.OpenDialogOptions = {
+               canSelectMany: false,
+               openLabel: 'Select Python File',
+               filters: {
+                   'Python files': ['py'],
+                   'All files': ['*']
+               }
+           };
+
+           const fileUri = await vscode.window.showOpenDialog(options);
+           if (fileUri && fileUri[0]) {
+               const filePath = fileUri[0].fsPath;
+               runPythonScanner(filePath);
+           }
+       });
+
+       context.subscriptions.push(disposable);
+   }
+
+   function runPythonScanner(filePath: string) {
+       const scriptPath = path.join(__dirname, 'scanner.py');
+       const pythonProcess = cp.spawn('python3', [scriptPath, filePath]);
+
+       pythonProcess.stdout.on('data', (data) => {
+           vscode.window.showInformationMessage(data.toString());
+       });
+
+       pythonProcess.stderr.on('data', (data) => {
+           vscode.window.showErrorMessage(data.toString());
+       });
+
+       pythonProcess.on('close', (code) => {
+           if (code !== 0) {
+               vscode.window.showErrorMessage(`Scanner process exited with code ${code}`);
+           }
+       });
+   }
+
+   export function deactivate() {}
+   ```
+
+3. **Add the Python Script**:
+   Create a new file `scanner.py` in the `src` directory and paste your Python vulnerability scanner script into it. Ensure the script can accept a file path as an argument.
+
+   ```python
+   import sys
+   import os
+
+   # Your existing vulnerability scanner code here
+
+   if __name__ == "__main__":
+       if len(sys.argv) != 2:
+           print("Usage: python scanner.py <path_to_python_file>")
+           sys.exit(1)
+
+       file_path = sys.argv[1]
+       if not os.path.exists(file_path):
+           print(f"Error: File '{file_path}' does not exist.")
+           sys.exit(1)
+
+       main(file_path)
+   ```
+
+4. **Update `package.json`**:
+   Add a command to `package.json` to register your extension command.
+
+   ```json
+   {
+       "name": "python-vulnerability-scanner",
+       "displayName": "Python Vulnerability Scanner",
+       "description": "Scans Python files for vulnerabilities",
+       "version": "0.0.1",
+       "engines": {
+           "vscode": "^1.50.0"
+       },
+       "categories": [
+           "Other"
+       ],
+       "activationEvents": [
+           "onCommand:extension.scanPythonFile"
+       ],
+       "main": "./out/extension.js",
+       "contributes": {
+           "commands": [
+               {
+                   "command": "extension.scanPythonFile",
+                   "title": "Scan Python File for Vulnerabilities"
+               }
+           ]
+       },
+       "scripts": {
+           "vscode:prepublish": "npm run compile",
+           "compile": "tsc -p ./",
+           "watch": "tsc -watch -p ./",
+           "postinstall": "node ./node_modules/vscode/bin/install"
+       },
+       "devDependencies": {
+           "typescript": "^4.0.3",
+           "vscode": "^1.1.37",
+           "@types/node": "^14.14.6",
+           "@types/mocha": "^8.0.4"
+       }
+   }
+   ```
+
+### Step 4: Test the Extension
+
+1. **Compile the Extension**:
+   ```bash
+   npm run compile
+   ```
+
+2. **Run the Extension**:
+   Press `F5` in VS Code to open a new VS Code window with your extension loaded.
+
+3. **Test the Command**:
+   Open the command palette (`Ctrl+Shift+P`), type "Scan Python File for Vulnerabilities", and select it. Choose a Python file to scan and observe the output.
+
+### Step 5: Package and Publish (Optional)
+
+1. **Package the Extension**:
+   ```bash
+   vsce package
+   ```
+
+2. **Publish the Extension**:
+   Follow the instructions on the [Visual Studio Code Marketplace](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) to publish your extension.
+
+By following these steps, you will have created a VS Code extension that allows users to scan Python files for vulnerabilities using your provided script.
